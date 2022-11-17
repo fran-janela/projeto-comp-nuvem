@@ -1,3 +1,4 @@
+from functions import *
 class Infrastructure:
     def __init__(self, region, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY):
         self.infrastructure = { 
@@ -6,11 +7,19 @@ class Infrastructure:
             "AWS_ACCESS_KEY_ID": AWS_ACCESS_KEY_ID,
             "AWS_SECRET_ACCESS_KEY": AWS_SECRET_ACCESS_KEY,
             "network_configurations": {}, 
-            "user_configurations": [],
             "security_group_configurations": [],
-            "instances_configurations": []}
+            "instances_configuration": [],
+            "user_configurations": []}
 
         self.add_network()
+
+    # Set infrastructure with a json file
+    def set_infrastructure(self, json_file_name):
+        self.infrastructure = read_json(json_file_name)
+
+    # Get infrastructure
+    def get_infrastructure(self):
+        return self.infrastructure
     
     # ==============================================================================
     #                                    NETWORK

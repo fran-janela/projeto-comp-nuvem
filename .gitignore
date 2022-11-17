@@ -37,4 +37,3 @@ venv
 secret.tfvars
 
 config/
-sample/
