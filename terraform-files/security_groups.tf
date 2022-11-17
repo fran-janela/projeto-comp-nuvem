@@ -1,15 +1,18 @@
-resource "aws_security_group" "allow_tls" {
-  name        = "allow_tls"
-  description = "Allow TLS inbound traffic"
-  vpc_id      = aws_vpc.main.id
+resource "aws_security_group" "sg" {
+  for_each = {for sg in var.security_group_configurations: sg.sg_name => sg}
+  name        = each.value.sg_name
+  description = each.value.sg_description
+  vpc_id      = aws_vpc.VPC.id
 
-  ingress {
-    description      = "TLS from VPC"
-    from_port        = 443
-    to_port          = 443
-    protocol         = "tcp"
-    cidr_blocks      = [aws_vpc.main.cidr_block]
-    ipv6_cidr_blocks = [aws_vpc.main.ipv6_cidr_block]
+  dynamic "ingress" {
+    for_each = each.value.ingress_ports
+    content {
+      description = ingress.value.description
+      from_port   = ingress.value.from_port
+      to_port     = ingress.value.to_port
+      protocol    = ingress.value.protocol
+      cidr_blocks = ingress.value.cidr_blocks
+    }
   }
 
   egress {
@@ -21,6 +24,11 @@ resource "aws_security_group" "allow_tls" {
   }
 
   tags = {
-    Name = "allow_tls"
+    Name = each.value.sg_name
   }
+}
+
+output "security_groups" {
+  value       = [for sg in aws_security_group.sg : sg]
+  description = "All Security Group details"
 }

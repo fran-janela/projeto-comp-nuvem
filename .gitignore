@@ -32,5 +32,9 @@ override.tf.json
 # example: *tfplan*
 
 venv
+.env
 
 secret.tfvars
+
+config/
+sample/
