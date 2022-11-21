@@ -19,7 +19,7 @@ variable "instances_configuration" {
     instance_name = string
     instance_type    = string
     ami              = string
-    security_group_ids = list(string)
+    security_groups_ids = list(string)
   }))
 }
 
@@ -29,6 +29,14 @@ variable "security_group_configurations" {
     sg_name = string
     sg_description = string
     ingress_ports = list(object({
+      id = number
+      description = string
+      from_port = number
+      to_port = number
+      protocol = string
+      cidr_blocks = list(string)
+    }))
+    egress_ports = list(object({
       id = number
       description = string
       from_port = number

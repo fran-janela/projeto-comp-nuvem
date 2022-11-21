@@ -11,7 +11,34 @@ class Infrastructure:
             "instances_configuration": [],
             "user_configurations": []}
 
+        self.available_instnce_types = [
+            "t2.nano", "t2.micro", "t2.small", "t2.medium", "t2.large", "t2.xlarge", "t2.2xlarge",
+            "t3.nano", "t3.micro", "t3.small", "t3.medium", "t3.large", "t3.xlarge", "t3.2xlarge"]
+
+        self.ami_reference = {
+            "us-east-1": "ami-00a0e0b890ae17d65",
+            "us-east-2": "ami-0b4577d77dac11b84",
+            "us-west-1": "ami-07ca31583160e0a93",
+            "us-west-2": "ami-0cc5d32378afd3b57",
+            "sa-east-1": "ami-084fadaa5d7882916",
+            "eu-west-1": "ami-082bec92abb02aba4",
+            "eu-west-2": "ami-0f0741503c767a317",
+            "eu-west-3": "ami-03a5d4b9a3dba6ebe",
+            "eu-central-1": "ami-0a474432ef48429a7",
+            "ap-southeast-1": "ami-0ec559e18e8ed6466",
+            "ap-southeast-2": "ami-0bb85ffded6e32670",
+            "ap-northeast-1": "ami-04705b95f49850f5e",
+            "ap-northeast-2": "ami-0cf362b88b0395b94",
+            "ap-northeast-3": "ami-0cf362b88b0395b94",
+            "ca-central-1": "ami-0191b23c592e9a01b",
+            "cn-north-1": "ami-0764541358866f84e",
+            "cn-northwest-1": "ami-02441dea73a15a612",  
+            "us-gov-west-1": "ami-02642d561d662175f",
+            "us-gov-east-1": "ami-01c308292da9fe7f5"
+        }
+
         self.add_network()
+        self.add_default_security_group()
 
     # Set infrastructure with a json file
     def set_infrastructure(self, json_file_name):
@@ -37,7 +64,28 @@ class Infrastructure:
         }
         self.infrastructure["network_configurations"] = net_config
 
-
+    def add_default_security_group(self):
+        default_sg = {
+            "sg_name": "defaultSSH", 
+            "sg_description": "Default Security Group for SSH",
+            "ingress_ports": [{
+                "id": 0,
+                "description": "SSH",
+                "from_port": 22,
+                "to_port": 22,
+                "protocol": "tcp",
+                "cidr_blocks": ["0.0.0.0/0"]
+            }],
+            "egress_ports": [{
+                "id": 0,
+                "description": "All",
+                "from_port": 0,
+                "to_port": 0,
+                "protocol": "-1",
+                "cidr_blocks": ["0.0.0.0/0"]
+            }]
+        }
+        self.infrastructure["security_group_configurations"].append(default_sg)
     # ==============================================================================
     #                                    USERS
     # ==============================================================================
@@ -83,15 +131,14 @@ class Infrastructure:
     # ==============================================================================
     # Add an instance to the infrastructure
     def add_instance(self, instance):
-        self.infrastructure["instances_configurations"].append(instance)
+        self.infrastructure["instances_configuration"].append(instance)
 
     # Create instance for the infrastructure
-    def create_instance(self, application_name, ami, instance_type, subnet_id, security_group_ids):
+    def create_instance(self, application_name, ami, instance_type, security_group_ids):
         instance = {
-            "application_name": application_name,
+            "instance_name": application_name,
             "ami": ami,
             "instance_type": instance_type,
-            "subnet_id": subnet_id,
-            "vpc_security_group_ids": security_group_ids
+            "security_groups_ids": security_group_ids
         }
         self.add_instance(instance)

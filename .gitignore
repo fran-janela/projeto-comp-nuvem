@@ -37,3 +37,20 @@ venv
 secret.tfvars
 
 config/
+
+tf-us-east-1/
+tf-us-east-2/
+tf-us-west-1/
+tf-us-west-2/
+tf-sa-east-1/
+tf-eu-west-1/
+tf-eu-west-2/
+tf-eu-west-3/
+tf-eu-central-1/
+tf-ap-southeast-1/
+tf-ap-southeast-2/
+tf-ap-northeast-1/
+tf-ap-northeast-2/
+tf-ap-south-1/
+
+teste.py

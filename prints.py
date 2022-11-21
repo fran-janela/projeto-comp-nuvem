@@ -1,5 +1,4 @@
-def inicial_print(console): 
-    console.rule("[bold grey62] Welcome to", style="bold grey62", align="center")      
+def inicial_print(console):    
     console.print("\n[bold orange1] _______ _______ _______[/] ")
     console.print("[bold orange1]|\\     /|\\     /|\\     /|[/] [bold white] _        __              _           _ _     _           ")
     console.print("[bold orange1]| +---+ | +---+ | +---+ |[/] [bold white](_)      / _|            | |         (_) |   | |          ")
