@@ -37,14 +37,14 @@ def get_region_from_dir(tf_dir):
 
 def create_new_region_dir(region):
     os.system(f'cp -r sample/ tf-{region}/ &> /dev/null')
-
-def tf_create_region(region):
     os.system(f'cd tf-{region} && mkdir config &> /dev/null')
     os.system(f'cd tf-{region}/config && touch {region}.tfvars.json &> /dev/null')
+
+def tf_create_region(region):
     os.system(f'cd tf-{region} && terraform init &> /dev/null')
 
 def tf_apply_changes(region):
-    os.system(f'cd tf-{region} && terraform apply -var-file="config/{region}.tfvars.json" -auto-approve &>')
+    os.system(f'cd tf-{region} && terraform apply -var-file="config/{region}.tfvars.json" -auto-approve')
 
 def tf_destroy_region(region):
     os.system(f'cd tf-{region} && terraform destroy -var-file="config/{region}.tfvars.json" -auto-approve &> /dev/null')
@@ -65,3 +65,18 @@ def get_sec_groups(region):
         sec_groups_names.append(f'{sec_group["name"]} - {sec_group["description"]}')
         sec_groups_ids.append(sec_group["id"])
     return sec_groups_names, sec_groups_ids
+
+def get_instances(region):
+    outputs = read_tfstate_outputs(region)
+    configurated_instances = {}
+    for instance in outputs["instances"]["value"]:
+        configurated_instances[instance["tags"]["Name"]] = {
+            "id": instance["id"],
+            "instance_type": instance["instance_type"],
+            "instance_state": instance["instance_state"],
+            "public_ip": instance["public_ip"],
+            "public_dns": instance["public_dns"],
+            "key_name": instance["key_name"],
+            "security_groups": instance["vpc_security_group_ids"]
+        }
+    return configurated_instances

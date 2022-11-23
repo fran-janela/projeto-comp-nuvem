@@ -20,6 +20,7 @@ variable "instances_configuration" {
     instance_type    = string
     ami              = string
     security_groups_ids = list(string)
+    key_name = string
   }))
 }
 

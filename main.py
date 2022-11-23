@@ -50,6 +50,7 @@ def main():
     current_region = ""
     ESTADO = "START_MENU"
     running = True
+    invalid_input = False
     
     while running:
         # ===============================================================================================
@@ -222,9 +223,13 @@ def main():
             console.print(f"[bold blue3]4[/] - [bold white]Delete Instance[/]")
             console.print(f"[bold blue3]5[/] - [bold white]Back[/]")
             available_input = [str(i) for i in range(1, 6)]
+            if invalid_input:
+                console.print("\n[bold red]Invalid input, choose again please[/]")
+                invalid_input = False
             selection = console.input("\n [bold blue3]>>[/] ")
             if selection not in available_input:
                 console.print("\n[bold red]Invalid input, choose again please[/]")
+                invalid_input = True
                 continue
             else:
                 if selection == "1":
@@ -244,15 +249,55 @@ def main():
                     continue
         
         # ------------------------------- LIST INSTANCES ------------------------------------
-        # elif ESTADO == "LIST_INSTANCES":
+        elif ESTADO == "LIST_INSTANCES":
+            clear_console()
+            inicial_print(console)
+            console.rule("[bold grey62] List Instances", style="bold grey62", align="center")
+            console.print("\nAvailable Instances:")
+            id = 1
+            for instance in allInfra[current_region].infrastructure["instances_configuration"]:
+                console.print(f'[bold blue3]{id}[/] - [bold white]{instance["instance_name"]}[/]')
+                id+=1
+            console.print(f"\n.. or")
+            console.print(f"[bold white]back to main menu[/] with [bold grey27]back[/] option")
+            available_input = [str(i) for i in range(0, len(allInfra[current_region].infrastructure["instances_configuration"])+1)]
+            available_input.append("back")
+            if invalid_input:
+                console.print("\n[bold red]Invalid input, choose again please[/]")
+                invalid_input = False
+            selection = console.input("\n [bold blue3]>>[/] ")
+            if selection not in available_input:
+                console.print("\n[bold red]Invalid input, choose again please[/]")
+                invalid_input = True
+                continue
+            else:
+                if selection == "back":
+                    ESTADO = "MANAGE_INSTANCES"
+                    continue
+                else:
+                    instances_config = get_instances(current_region)
+                    instance_name = allInfra[current_region].infrastructure["instances_configuration"][int(selection)-1]["instance_name"]
+                    instance = instances_config[instance_name]
+                    console.rule(f'\n[bold grey62] Instance: [/][bold green3]{instance_name}[/]', style="bold grey62", align="center")
+                    console.print(f'\n[grey62] Instance ID: [/][bold white]{instance["id"]}[/]')
+                    console.print(f'\n[grey62] Instance Type: [/][bold white]{instance["instance_type"]}[/]')
+                    console.print(f'\n[grey62] Instance State: [/][bold white]{instance["instance_state"]}[/]')
+                    console.print(f'\n[grey62] Public IP: [/][bold white]{instance["public_ip"]}[/]')
+                    console.print(f'\n[grey62] Public DNS: [/][bold white]{instance["public_dns"]}[/]')
+                    console.print(f'\n[grey62] Key Name: [/][bold white]{instance["key_name"]}[/]')
+                    console.print(f'\n[grey62] Security Groups: [/][bold white]{instance["security_groups"]}[/]')
+                    _ = console.input("\n\n [bold light_steel_blue]Press Enter to continue[/] ")
+                    continue
+
+
 
         # ------------------------------- CREATE INSTANCE ------------------------------------
         elif ESTADO == "CREATE_INSTANCE":
             name = ""
-            description = ""
             instance_type = ""
             ami = allInfra[current_region].ami_reference[current_region]
             security_group_ids = []
+            key_name = ""
 
             clear_console()
             inicial_print(console)
@@ -307,8 +352,11 @@ def main():
                     console.print("\n[bold red]This security group is already selected[/]")
                 else:
                     security_group_ids.append(available_sec_groups_ids[int(security_group_option)-1])
+            # Set key name:
+            console.print("\nFor Last, choose the [bold white]key pair name[/] for the instance:")
+            key_name = console.input("\n=> [bold blue3]Key Pair Name[/]: ")
             # Create instance:
-            allInfra[current_region].create_instance(name, ami, instance_type, security_group_ids)
+            allInfra[current_region].create_instance(name, ami, instance_type, security_group_ids, key_name)
             write_json(allInfra[current_region].infrastructure)
             tf_apply_changes(current_region)
             ESTADO = "MANAGE_INSTANCES"

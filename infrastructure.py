@@ -134,11 +134,12 @@ class Infrastructure:
         self.infrastructure["instances_configuration"].append(instance)
 
     # Create instance for the infrastructure
-    def create_instance(self, application_name, ami, instance_type, security_group_ids):
+    def create_instance(self, application_name, ami, instance_type, security_group_ids, key_name):
         instance = {
             "instance_name": application_name,
             "ami": ami,
             "instance_type": instance_type,
-            "security_groups_ids": security_group_ids
+            "security_groups_ids": security_group_ids,
+            "key_name": key_name
         }
         self.add_instance(instance)

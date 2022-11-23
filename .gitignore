@@ -52,5 +52,10 @@ tf-ap-southeast-2/
 tf-ap-northeast-1/
 tf-ap-northeast-2/
 tf-ap-south-1/
+tf-ca-central-1/
+tf-eu-north-1/
+tf-sa-east-1/
+tf-us-gov-east-1/
+tf-us-gov-west-1/
 
 teste.py

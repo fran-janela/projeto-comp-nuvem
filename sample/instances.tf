@@ -4,6 +4,7 @@ resource "aws_instance" "web" {
   instance_type = each.value.instance_type
   subnet_id = aws_subnet.Subnet.id
   vpc_security_group_ids = each.value.security_groups_ids
+  key_name = each.value.key_name
   
   tags = {
     Name = "${each.value.instance_name}"
