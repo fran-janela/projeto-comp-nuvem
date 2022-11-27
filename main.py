@@ -69,6 +69,7 @@ def main():
     invalid_input = False
     cleared_infra = False
     invalid_json_data = False
+    invalid_region_for_HA = False
     
     while running:
         # ===============================================================================================
@@ -82,9 +83,11 @@ def main():
             console.print("\nAvailable Options:")
             console.print("[bold blue3]1[/] - Manage Regions")
             console.print("[bold blue3]2[/] - Manage IAM Users & Policies") 
-            console.print("[bold blue3]3[/] - Exit")
+            console.print("[bold blue3]3[/] - List all Instances")
+            console.print("\n.. or")
+            console.print("type [bold red]exit[/] to exit the program")
             console.print("\n[bold grey62]Choose an option:[/]")
-            available_inputs = ["1", "2", "3"]
+            available_inputs = ["1", "2", "3", "exit"]
             option = console.input("[bold blue3]>>[/] ")
             if option in available_inputs:
                 if option == "1":
@@ -92,6 +95,8 @@ def main():
                 elif option == "2":
                     ESTADO = "IAM_MENU"
                 elif option == "3":
+                    ESTADO = "LIST_ALL_INSTANCES"
+                elif option == "exit":
                     running = False
             else:
                 console.print("[bold red]Invalid option[/]")
@@ -207,13 +212,21 @@ def main():
             console.print("\nAvailable Actions:")
             console.print(f"[bold blue3]1[/] - [bold white]Manage Instances[/]")
             console.print(f"[bold blue3]2[/] - [bold white]Manage Security Groups[/]")
-            console.print(f"[bold blue3]3[/] - [bold white]Change Region[/]")
-            console.print(f"[bold blue3]4[/] - [bold white]Exit[/]")
+            console.print(f"[bold blue3]3[/] - [bold white]Manage HA aplication[/]")
+            console.print(f"[bold blue3]4[/] - [bold white]Change Region[/]")
+            console.print(f"\n.. or")
+            console.print(f"[bold white]back to main menu[/] with [bold grey27]back[/] option")
             available_input = [str(i) for i in range(1, 5)]
+            available_input.append("back")
+            if invalid_input:
+                console.print("\n[bold red]Invalid input, choose again please[/]")
+                invalid_input = False
+            if invalid_region_for_HA:
+                console.print("\n[bold red]Invalid Region for building HA application, only available in us-east-1 or us-east-2[/]")
+                invalid_region_for_HA = False
             selection = console.input("\n [bold blue3]>>[/] ")
             if selection not in available_input:
-                console.print("\n[bold red]Invalid input, choose again please[/]")
-                continue
+                invalid_input = True
             else:
                 if selection == "1":
                     ESTADO = "MANAGE_INSTANCES"
@@ -222,10 +235,16 @@ def main():
                     ESTADO = "MANAGE_SECURITY_GROUPS"
                     continue
                 elif selection == "3":
-                    ESTADO = "CHOOSE_REGION"
+                    if current_region in ["us-east-1", "us-east-2"]:
+                        ESTADO = "MANAGE_HA_APPLICATION"
+                    else:
+                        invalid_region_for_HA = True
                     continue
                 elif selection == "4":
-                    running = False
+                    ESTADO = "CHOOSE_REGION"
+                    continue
+                elif selection == "back":
+                    ESTADO = "START_MENU"
                     continue
         
         # ===============================================================================================
@@ -313,7 +332,6 @@ def main():
                     _ = console.input("\n\n [bold light_steel_blue]Press Enter to continue[/] ")
                     continue
 
-
         # ------------------------------- CREATE INSTANCE ------------------------------------
         elif ESTADO == "CREATE_INSTANCE":
             name = ""
@@ -393,8 +411,8 @@ def main():
             clear_console()
             inicial_print(console)
             console.rule("[bold grey62] Delete Instance", style="bold grey62", align="center")
-            instances_config = get_instances(current_region)
-            instances_names = list(instances_config.keys())
+            instances_config = allInfra[current_region].infrastructure["instances_configuration"]
+            instances_names = [instance["instance_name"] for instance in instances_config]
             for i in range(len(instances_names)):
                 console.print(f"[bold blue3]{i+1}[/] - [bold white]{instances_names[i]}[/]")
             console.print(f"\n.. or")
@@ -405,7 +423,7 @@ def main():
                 console.print("\n[bold red]Invalid input, choose again please[/]")
                 invalid_input = False
             instance_option = console.input("\n [bold blue3]>>[/] ")
-            if selection not in available_input:
+            if instance_option not in available_input:
                 console.print("\n[bold red]Invalid input, choose again please[/]")
                 invalid_input = True
                 continue
@@ -536,7 +554,7 @@ def main():
             clear_console()
             inicial_print(console)
             console.rule("[bold grey62] Manage Security Groups", style="bold grey62", align="center")
-            console.print(f"[bold blue3]1[/] - [bold white]List Security Groups[/]")
+            console.print(f"\n[bold blue3]1[/] - [bold white]List Security Groups[/]")
             console.print(f"[bold blue3]2[/] - [bold white]Create Security Group[/]")
             console.print(f"[bold blue3]3[/] - [bold white]Delete Security Group[/]")
             console.print(f"[bold blue3]4[/] - [bold white]Add Rule to Security Group[/]")
@@ -559,7 +577,7 @@ def main():
                     ESTADO = "LIST_SECURITY_GROUPS"
                 elif option == "2":
                     ESTADO = "CREATE_SECURITY_GROUP"
-                elif option == "2":
+                elif option == "3":
                     ESTADO = "DELETE_SECURITY_GROUP"
                 elif option == "4":
                     ESTADO = "ADD_RULE_SECURITY_GROUP"
@@ -586,7 +604,7 @@ def main():
                 invalid_input = False
             security_group_option = console.input("\n [bold blue3]>>[/] ")
             acepted_input = False
-            if selection not in available_input:
+            if security_group_option not in available_input:
                 invalid_input = True
                 continue
             else:
@@ -780,9 +798,8 @@ def main():
             console.rule("[bold grey62] Add Rule to Security Group", style="bold grey62", align="center")
             console.print("\n[bold white]Security Groups[/] in the [bold white]Region[/] that are not being used:")
             sec_groups_names, sec_groups_ids = get_sec_groups(current_region)
-            index_print = 1
             for i in range(len(sec_groups_names)):
-                console.print(f"[bold blue3]{index_print}[/] - [bold white]{sec_groups_names[i]}[/]")
+                console.print(f"[bold blue3]{i + 1}[/] - [bold white]{sec_groups_names[i]}[/]")
             console.print(f"\n.. or")
             console.print(f"exit security group selection by typing [bold grey62]back[/]\n")
             available_input = [str(i) for i in range(1, len(sec_groups_names)+1)]
@@ -1010,6 +1027,119 @@ def main():
                     tf_apply_changes(current_region)
                     sleep(2)
 
+        # ===============================================================================================
+        #                                    MANAGE HA APLICATION
+        # ===============================================================================================
+        # ------------------------------ MANAGE HA APLICATION ------------------------------
+        elif ESTADO == "MANAGE_HA_APPLICATION":
+            clear_console()
+            inicial_print(console)
+            console.rule("[bold grey62] Manage HA Application", style="bold grey62", align="center")
+            console.print("\n[bold blue3]1[/] - [bold white]List HA aplication URL[/]")
+            console.print("[bold blue3]2[/] - [bold white]Create HA Application[/]")
+            console.print("[bold blue3]3[/] - [bold white]Remove HA Application[/]")
+            console.print(f"\n.. or")
+            console.print(f"go back to Choose Action by typing [bold grey62]back[/]\n")
+            available_input = ["1", "2", "3", "back"]
+            if invalid_input:
+                console.print("\n[bold red]Invalid input, choose again please[/]")
+                invalid_input = False
+            ha_app_option = console.input("\n [bold blue3]>>[/] ")
+            if ha_app_option not in available_input:
+                invalid_input = True
+                continue
+            else:
+                if ha_app_option == "back":
+                    ESTADO = "CHOOSE_ACTION"
+                    continue
+                elif ha_app_option == "1":
+                    if allInfra[current_region].infrastructure["create_HA_infrastructure"]:
+                        console.rule("[bold grey62] HA Application URL", style="bold grey62", align="center")
+                        console.print(f'\n[bold white]URL[/]: [bold blue3]{get_lb_url(current_region)}[/]')
+                        _ = console.input("\n\n [bold light_steel_blue]Press Enter to continue[/] ")
+                        continue
+                    else:
+                        console.print("\n\n[bold red]HA Application not created[/]")
+                        _ = console.input("\n\n [bold light_steel_blue]Press Enter to continue[/] ")
+                        continue
+                elif ha_app_option == "2":
+                    if not allInfra[current_region].infrastructure["create_HA_infrastructure"]:
+                        ESTADO = "CREATE_HA_APPLICATION"
+                    else:
+                        console.print("\n\n[bold red]HA Application already created[/]")
+                        _ = console.input("\n\n [bold light_steel_blue]Press Enter to continue[/] ")
+                        continue
+                    continue
+                elif ha_app_option == "3":
+                    if allInfra[current_region].infrastructure["create_HA_infrastructure"]:
+                        ESTADO = "REMOVE_HA_APPLICATION"
+                    else:
+                        console.print("\n\n[bold red]HA Application not created[/]")
+                        _ = console.input("\n\n [bold light_steel_blue]Press Enter to continue[/] ")
+                        continue
+                    continue
+
+        # ------------------------------ CREATE HA APLICATION ------------------------------
+        elif ESTADO == "CREATE_HA_APPLICATION":
+            clear_console()
+            inicial_print(console)
+            console.rule("[bold grey62] Create HA Application", style="bold grey62", align="center")
+            console.print("\nIf you want to start an example of HA application, type [bold blue3]yes[/]")
+            console.print(f"\n.. or")
+            console.print(f"go back to Manage HA Application by typing [bold grey62]back[/]\n")
+            available_input = ["yes", "Y", "YES", "Yes", "y", "back"]
+            if invalid_input:
+                console.print("\n[bold red]Invalid input, choose again please[/]")
+                invalid_input = False
+            ha_app_option = console.input("\n [bold blue3]>>[/] ")
+            if ha_app_option not in available_input:
+                invalid_input = True
+                continue
+            else:
+                if ha_app_option == "back":
+                    ESTADO = "MANAGE_HA_APPLICATION"
+                    continue
+                elif ha_app_option in ["yes", "Y", "YES", "Yes", "y"]:
+                    console.rule("\n[bold grey62] Creating HA Application", style="bold grey62", align="center")
+                    console.print("\n> Insert the key name to be used in the HA application")
+                    key_name = console.input("\n [bold blue3]>>[/] ")
+                    console.print("")
+                    allInfra[current_region].add_ha_infra(key_name)
+                    write_json(allInfra[current_region].infrastructure)
+                    copy_files_from_dir_to_dir(f'tf-{current_region}/')
+                    tf_apply_changes(current_region)
+                    sleep(2)
+                    ESTADO = "MANAGE_HA_APPLICATION"
+                    continue
+
+        # ------------------------------ REMOVE HA APLICATION ------------------------------
+        elif ESTADO == "REMOVE_HA_APPLICATION":
+            clear_console()
+            inicial_print(console)
+            console.rule("[bold grey62] Remove HA Application", style="bold grey62", align="center")
+            console.print("\nIf you want to remove the HA application, type [bold blue3]yes[/]")
+            console.print(f"\n.. or")
+            console.print(f"go back to Manage HA Application by typing [bold grey62]back[/]\n")
+            available_input = ["yes", "Y", "YES", "Yes", "y", "back"]
+            if invalid_input:
+                console.print("\n[bold red]Invalid input, choose again please[/]")
+                invalid_input = False
+            ha_app_option = console.input("\n [bold blue3]>>[/] ")
+            if ha_app_option not in available_input:
+                invalid_input = True
+                continue
+            else:
+                if ha_app_option == "back":
+                    ESTADO = "MANAGE_HA_APPLICATION"
+                    continue
+                elif ha_app_option in ["yes", "Y", "YES", "Yes", "y"]:
+                    remove_HA_configurations(current_region)
+                    tf_apply_changes(current_region)
+                    allInfra[current_region].delete_ha_infra()
+                    write_json(allInfra[current_region].infrastructure)
+                    sleep(2)
+                    ESTADO = "MANAGE_HA_APPLICATION"
+                    continue
         # ===============================================================================================
         #                                         USER MENU
         # ===============================================================================================
@@ -1308,7 +1438,6 @@ def main():
                         ESTADO = "MANAGE_USERS"
                         continue
 
-
         # ===============================================================================================
         #                                         MANAGE POLICIES
         # ===============================================================================================
@@ -1417,8 +1546,45 @@ def main():
                         except:
                             os.system(f'rm -rf iam/policies/{policy_name}.json')
                             invalid_json_data = True
-                        
-                
+
+        # ===============================================================================================
+        #                                     LIST ALL INSTANCES
+        # ===============================================================================================
+        elif ESTADO == "LIST_ALL_INSTANCES":
+            clear_console()
+            inicial_print(console)
+            console.rule("[bold grey62] List All Instances", style="bold grey62", align="center")
+            console.print("\nAvailable Instances:\n")
+            all_instances_config = get_all_instances_config()
+            for i in range(len(all_instances_config)):
+                console.print(f'[bold blue3]{i+1}[/] - [bold white]{all_instances_config[i]["name"]} \t- {all_instances_config[i]["region"]}[/]')
+            console.print(f"\n.. or")
+            console.print(f"exit instance listing by typing [bold grey62]back[/]\n")
+            available_inputs = [ str(i+1) for i in range(len(all_instances_config))]
+            available_inputs.append("back")
+            if invalid_input:
+                console.print("\n[bold red]Invalid input, choose again please[/]")
+                invalid_input = False
+            selection = console.input("\n [bold blue3]>>[/] ")
+            invalid_input = False
+            if selection not in available_inputs:
+                invalid_input = True
+                continue
+            elif selection == "back":
+                ESTADO = "START_MENU"
+                continue
+            else:
+                instance_config = all_instances_config[int(selection)-1]
+                console.rule(f'[bold grey62] Instance: [/][bold green3]{instance_config["name"]}[/]', style="bold grey62", align="center")
+                console.print(f'\n[grey62]Region[/]: [bold white]{instance_config["region"]}[/]')
+                console.print(f'\n[grey62]Instance Type[/]: [bold white]{instance_config["instance_type"]}[/]')
+                console.print(f'\n[grey62]Instance State[/]: [bold white]{instance_config["instance_state"]}[/]')
+                console.print(f'\n[grey62]Key Pair Name[/]: [bold white]{instance_config["key_name"]}[/]')
+                console.print(f'\n[grey62]Security Groups[/]: [bold white]{instance_config["security_groups"]}[/]')
+                console.print(f'\n[grey62]Public IP[/]: [bold white]{instance_config["public_ip"]}[/]')
+                console.print(f'\n[grey62]Public DNS[/]: [bold white]{instance_config["public_dns"]}[/]')
+                _ = console.input("\n\n [bold light_steel_blue]Press Enter to continue[/] ")
+                continue
 
 if __name__ == "__main__":
     main()

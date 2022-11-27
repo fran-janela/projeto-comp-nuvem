@@ -109,7 +109,6 @@ def get_instances(region):
         }
     return configurated_instances
 
-
 def get_sec_groups_in_use(region):
     outputs = read_tfstate_outputs(region)
     sec_groups_in_use = []
@@ -117,9 +116,8 @@ def get_sec_groups_in_use(region):
         sec_groups_in_use.extend(instance["vpc_security_group_ids"])
     return sec_groups_in_use
 
-
 def tf_iam_apply_changes():
-    os.system(f'cd iam && terraform apply -var-file="config/iam.tfvars.json" -auto-approve')
+    os.system(f'cd iam && terraform apply -var-file="config/iam.tfvars.json" -auto-approve &> /dev/null')
 
 def get_user_password(username):
     with open(f'iam/terraform.tfstate') as f:
@@ -151,3 +149,38 @@ def json_policy_to_infra(policy, policy_name):
                     conditions.append({"test": test, "variable": variable, "values": values})
         statements.append({"restriction_name":f"{policy_name}-{index}", "actions": actions, "resources": resources, "conditions": conditions})
     return statements
+
+def get_all_instances_config():
+    all_regions = all_created_regions_from_dir(all_tf_dirs())
+    all_instances = {}
+    for region in all_regions:
+        all_instances[region] = get_instances(region)
+    all_instances_config = []
+    for region in all_instances.keys():
+        for instance in all_instances[region].keys():
+            all_instances_config.append({
+                "name": instance,
+                "region": region,
+                "instance_type": all_instances[region][instance]["instance_type"],
+                "instance_state": all_instances[region][instance]["instance_state"],
+                "public_ip": all_instances[region][instance]["public_ip"],
+                "public_dns": all_instances[region][instance]["public_dns"],
+                "key_name": all_instances[region][instance]["key_name"],
+                "security_groups": all_instances[region][instance]["security_groups"]
+            })
+    return all_instances_config
+
+def copy_files_from_dir_to_dir(dir_to):
+    os.system(f'cp -r "sample-HA/" {dir_to}')
+
+def remove_HA_configurations(region):
+    # all files in tf-us-east-1:
+    all_files = [f for f in os.listdir(f'tf-{region}/') if os.path.isfile(os.path.join(f'tf-{region}/', f))]
+    # delete HA files:
+    for file in all_files:
+        if file.split("-")[0] == "HA":
+            os.system(f'rm -rf tf-{region}/{file}')
+
+def get_lb_url(region):
+    outputs = read_tfstate_outputs(region)
+    return outputs["lb_endpoint"]["value"][0]
