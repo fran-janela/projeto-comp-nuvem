@@ -19,3 +19,9 @@ Com a **Instalação** e a **Preparação** feitas, para iniciar o programa bast
 ```
 python3 main.py
 ```
+
+--------------------
+
+## Roteiro
+
+Caso esteja interessado em desenvolver uma aplicação para construção de infraestrutura com código, siga o roteiro neste [link](google.com)
