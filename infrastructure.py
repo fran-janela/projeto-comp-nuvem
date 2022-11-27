@@ -8,8 +8,7 @@ class Infrastructure:
             "AWS_SECRET_ACCESS_KEY": AWS_SECRET_ACCESS_KEY,
             "network_configurations": {}, 
             "security_group_configurations": [],
-            "instances_configuration": [],
-            "user_configurations": []}
+            "instances_configuration": []}
 
         self.available_instnce_types = [
             "t2.nano", "t2.micro", "t2.small", "t2.medium", "t2.large", "t2.xlarge", "t2.2xlarge",
@@ -86,13 +85,6 @@ class Infrastructure:
             }]
         }
         self.infrastructure["security_group_configurations"].append(default_sg)
-    # ==============================================================================
-    #                                    USERS
-    # ==============================================================================
-    # Add a user to the infrastructure
-    def add_user(self, user):
-        self.infrastructure["user_configurations"].append(user)
-
 
     # ==============================================================================
     #                               SECURITY GROUPS
@@ -103,27 +95,84 @@ class Infrastructure:
 
     def create_security_group(self, name, description):
         security_group = {
-            "name": name,
-            "description": description
+            "sg_name": name,
+            "sg_description": description,
+            "ingress_ports": [],
+            "egress_ports": []
         }
         self.add_security_group(security_group)
 
+    def delete_sec_group(self, security_group_name):
+        for index in range(len(self.infrastructure["security_group_configurations"])):
+            if self.infrastructure["security_group_configurations"][index]["sg_name"] == security_group_name:
+                del self.infrastructure["security_group_configurations"][index]
+                break
+                
+
     def add_ingress(self, ingress, security_group_name):
         for index in range(len(self.infrastructure["security_group_configurations"])):
-            if self.infrastructure["security_group_configurations"][index]["name"] == security_group_name:
+            if self.infrastructure["security_group_configurations"][index]["sg_name"] == security_group_name:
                 self.infrastructure["security_group_configurations"][index]["ingress_ports"].append(ingress)
     
 
-    def create_ingress_for_sg(self, description, protocol, from_port, to_port, cidr_ip, security_group_name):
+    def create_ingress_for_sg(self, description, protocol, from_port, to_port, cidr_blocks, security_group_name):
+        for index in range(len(self.infrastructure["security_group_configurations"])):
+            if self.infrastructure["security_group_configurations"][index]["sg_name"] == security_group_name:
+                break
+        if len(self.infrastructure["security_group_configurations"][index]["ingress_ports"]) == 0:
+            id = 0
+        else:
+            id = self.infrastructure["security_group_configurations"][index]["ingress_ports"][-1]["id"] + 1
         ingress = {
-            "id": int(max(self.infrastructure["security_group_configurations"].filter(lambda x: x["name"] == security_group_name)["ingress_ports"]["id"]) + 1),
+            "id": id,
             "description": description,
             "protocol": protocol,
-            "from_port": from_port,
-            "to_port": to_port,
-            "cidr_ip": cidr_ip
+            "from_port": int(from_port),
+            "to_port": int(to_port),
+            "cidr_blocks": cidr_blocks
         }
         self.add_ingress(ingress, security_group_name)
+
+    def remove_ingress_rule_from_sg(self, id, security_group_name):
+        for index in range(len(self.infrastructure["security_group_configurations"])):
+            if self.infrastructure["security_group_configurations"][index]["sg_name"] == security_group_name:
+                for index2 in range(len(self.infrastructure["security_group_configurations"][index]["ingress_ports"])):
+                    if self.infrastructure["security_group_configurations"][index]["ingress_ports"][index2]["id"] == id:
+                        del self.infrastructure["security_group_configurations"][index]["ingress_ports"][index2]
+                        break
+                break
+
+    def add_egress(self, egress, security_group_name):
+        for index in range(len(self.infrastructure["security_group_configurations"])):
+            if self.infrastructure["security_group_configurations"][index]["sg_name"] == security_group_name:
+                self.infrastructure["security_group_configurations"][index]["egress_ports"].append(egress)
+
+    def create_egress_for_sg(self, description, protocol, from_port, to_port, cidr_blocks, security_group_name):
+        for index in range(len(self.infrastructure["security_group_configurations"])):
+            if self.infrastructure["security_group_configurations"][index]["sg_name"] == security_group_name:
+                break
+        if len(self.infrastructure["security_group_configurations"][index]["egress_ports"]) == 0:
+            id = 0
+        else:
+            id = self.infrastructure["security_group_configurations"][index]["egress_ports"][-1]["id"] + 1
+        egress = {
+            "id": id,
+            "description": description,
+            "protocol": protocol,
+            "from_port": int(from_port),
+            "to_port": int(to_port),
+            "cidr_blocks": cidr_blocks
+        }
+        self.add_egress(egress, security_group_name)
+
+    def remove_egress_rule_from_sg(self, id, security_group_name):
+        for index in range(len(self.infrastructure["security_group_configurations"])):
+            if self.infrastructure["security_group_configurations"][index]["sg_name"] == security_group_name:
+                for index2 in range(len(self.infrastructure["security_group_configurations"][index]["egress_ports"])):
+                    if self.infrastructure["security_group_configurations"][index]["egress_ports"][index2]["id"] == id:
+                        del self.infrastructure["security_group_configurations"][index]["egress_ports"][index2]
+                        break
+                break
 
 
     # ==============================================================================
@@ -134,12 +183,29 @@ class Infrastructure:
         self.infrastructure["instances_configuration"].append(instance)
 
     # Create instance for the infrastructure
-    def create_instance(self, application_name, ami, instance_type, security_group_ids, key_name):
+    def create_instance(self, application_name, count, ami, instance_type, security_group_ids, key_name):
         instance = {
             "instance_name": application_name,
+            "no_of_instances": count,
             "ami": ami,
             "instance_type": instance_type,
             "security_groups_ids": security_group_ids,
             "key_name": key_name
         }
         self.add_instance(instance)
+
+    # Delete an instance from the infrastructure
+    def delete_instance(self, instance_name):
+        for index in range(len(self.infrastructure["instances_configuration"])):
+            if self.infrastructure["instances_configuration"][index]["instance_name"] == instance_name:
+                del self.infrastructure["instances_configuration"][index]
+
+    def update_number_of_instances(self, instance_name, count):
+        for index in range(len(self.infrastructure["instances_configuration"])):
+            if self.infrastructure["instances_configuration"][index]["instance_name"] == instance_name:
+                self.infrastructure["instances_configuration"][index]["no_of_instances"] = count
+
+    def update_instance_security_groups(self, instance_name, security_group_ids):
+        for index in range(len(self.infrastructure["instances_configuration"])):
+            if self.infrastructure["instances_configuration"][index]["instance_name"] == instance_name:
+                self.infrastructure["instances_configuration"][index]["security_groups_ids"] = security_group_ids

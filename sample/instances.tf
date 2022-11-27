@@ -1,5 +1,23 @@
+locals {
+  serverconfig = [
+    for srv in var.instances_configuration : [
+      for i in range(1, srv.no_of_instances+1) : {
+        instance_name = "${srv.instance_name}-${i}"
+        instance_type = srv.instance_type
+        ami = srv.ami
+        security_groups_ids = srv.security_groups_ids
+        key_name = srv.key_name
+      }
+    ]
+  ]
+}
+// We need to Flatten it before using it
+locals {
+  instances = flatten(local.serverconfig)
+}
+
 resource "aws_instance" "web" {
-  for_each = {for instance in var.instances_configuration: instance.instance_name => instance}
+  for_each = {for server in local.instances: server.instance_name =>  server}
   ami           = each.value.ami
   instance_type = each.value.instance_type
   subnet_id = aws_subnet.Subnet.id

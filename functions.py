@@ -13,6 +13,10 @@ def write_json(data):
     with open(f'tf-{data["region"]}/config/{data["region"]}.tfvars.json','w') as f:
         json.dump(data, f, indent=4)
 
+def write_iam_json(data):
+    with open(f'iam/config/iam.tfvars.json','w') as f:
+        json.dump(data, f, indent=4)
+
 def read_json(filename):
     with open(filename) as f:
         data = json.load(f)
@@ -35,6 +39,10 @@ def all_created_regions_from_dir(tf_dirs):
 def get_region_from_dir(tf_dir):
     return "-".join(tf_dir.split("-")[1:])
 
+def create_iam_config_folder():
+    os.system(f'cd iam && mkdir config &> /dev/null')
+    os.system(f'cd iam/config && touch iam.tfvars.json &> /dev/null')
+
 def create_new_region_dir(region):
     os.system(f'cp -r sample/ tf-{region}/ &> /dev/null')
     os.system(f'cd tf-{region} && mkdir config &> /dev/null')
@@ -48,6 +56,12 @@ def tf_apply_changes(region):
 
 def tf_destroy_region(region):
     os.system(f'cd tf-{region} && terraform destroy -var-file="config/{region}.tfvars.json" -auto-approve &> /dev/null')
+
+def destroy_iam_infrastructure():
+    os.system(f'cd iam && terraform destroy -var-file="config/iam.tfvars.json" -auto-approve &> /dev/null')
+
+def remove_iam_config_file():
+    os.system(f'cd iam/ && rm -rf config/ &> /dev/null')
 
 def remove_region_dir(region):
     os.system(f'rm -rf tf-{region}/ &> /dev/null')
@@ -66,6 +80,20 @@ def get_sec_groups(region):
         sec_groups_ids.append(sec_group["id"])
     return sec_groups_names, sec_groups_ids
 
+def get_sec_groups_to_list(region):
+    outputs = read_tfstate_outputs(region)
+    configurated_sec_groups = {}
+    for sec_group in outputs["security_groups"]["value"]:
+        configurated_sec_groups[sec_group["name"]] = {
+            "id": sec_group["id"],
+            "description": sec_group["description"],
+            "ingress": sec_group["ingress"],
+            "egress": sec_group["egress"],
+            "owner_id": sec_group["owner_id"],
+            "vpc_id": sec_group["vpc_id"]
+        }
+    return configurated_sec_groups
+
 def get_instances(region):
     outputs = read_tfstate_outputs(region)
     configurated_instances = {}
@@ -80,3 +108,46 @@ def get_instances(region):
             "security_groups": instance["vpc_security_group_ids"]
         }
     return configurated_instances
+
+
+def get_sec_groups_in_use(region):
+    outputs = read_tfstate_outputs(region)
+    sec_groups_in_use = []
+    for instance in outputs["instances"]["value"]:
+        sec_groups_in_use.extend(instance["vpc_security_group_ids"])
+    return sec_groups_in_use
+
+
+def tf_iam_apply_changes():
+    os.system(f'cd iam && terraform apply -var-file="config/iam.tfvars.json" -auto-approve')
+
+def get_user_password(username):
+    with open(f'iam/terraform.tfstate') as f:
+        data = json.load(f)
+    outputs = data["outputs"]
+    return outputs["created_users"]["value"][username]
+
+def json_policy_to_infra(policy, policy_name):
+    statements = []
+    for index in range(len(policy["Statement"])):
+        file_actions = policy["Statement"][index]["Action"]
+        if type(file_actions) == list:
+            actions = file_actions
+        else:
+            actions = [file_actions]
+        file_resources = policy["Statement"][index]["Resource"]
+        if type(file_resources) == list:
+            resources = file_resources
+        else:
+            resources = [file_resources]
+        conditions = []
+        if "Condition" in policy["Statement"][index].keys():
+            for test in policy["Statement"][index]["Condition"].keys():
+                for variable in policy["Statement"][index]["Condition"][test].keys():
+                    if type(policy["Statement"][index]["Condition"][test][variable]) == list:
+                        values = policy["Statement"][index]["Condition"][test][variable]
+                    else:
+                        values = [policy["Statement"][index]["Condition"][test][variable]]
+                    conditions.append({"test": test, "variable": variable, "values": values})
+        statements.append({"restriction_name":f"{policy_name}-{index}", "actions": actions, "resources": resources, "conditions": conditions})
+    return statements

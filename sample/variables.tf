@@ -16,6 +16,7 @@ variable "AWS_SECRET_ACCESS_KEY" {
 variable "instances_configuration" {
   description = "The total configuration, List of Objects/Dictionary"
   type = list(object({
+    no_of_instances = number
     instance_name = string
     instance_type    = string
     ami              = string
