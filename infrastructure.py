@@ -8,7 +8,8 @@ class Infrastructure:
             "AWS_SECRET_ACCESS_KEY": AWS_SECRET_ACCESS_KEY,
             "network_configurations": {}, 
             "security_group_configurations": [],
-            "instances_configuration": []}
+            "instances_configuration": [],
+            "create_HA_infrastructure": False}
 
         self.available_instnce_types = [
             "t2.nano", "t2.micro", "t2.small", "t2.medium", "t2.large", "t2.xlarge", "t2.2xlarge",
@@ -36,6 +37,11 @@ class Infrastructure:
             "us-gov-east-1": "ami-01c308292da9fe7f5"
         }
 
+        self.created_ami_aplications = {
+            "us-east-1": "ami-0ca76d1446fa1364a",
+            "us-east-2": "ami-04eb1766441d76062",
+        }
+
         self.add_network()
         self.add_default_security_group()
 
@@ -53,11 +59,11 @@ class Infrastructure:
     # Add a default network configuration to the infrastructure
     def add_network(self):
         net_config = {
-            "vpcCIDRblock": "10.0.0.0/16",
+            "vpcCIDRblock": "172.16.0.0/16",
             "instanceTenancy": "default",
             "dnsSupport": True,
             "dnsHostNames": True,
-            "publicsCIDRblock": "10.0.1.0/24",
+            "publicsCIDRblock": "172.16.10.0/24",
             "mapPublicIP": True,
             "publicdestCIDRblock": "0.0.0.0/0"
         }
@@ -209,3 +215,17 @@ class Infrastructure:
         for index in range(len(self.infrastructure["instances_configuration"])):
             if self.infrastructure["instances_configuration"][index]["instance_name"] == instance_name:
                 self.infrastructure["instances_configuration"][index]["security_groups_ids"] = security_group_ids
+
+    # ==============================================================================
+    #                                  ADD HA INFRA
+    # ==============================================================================
+
+    def add_ha_infra(self, key_name):
+        self.infrastructure["image_id"] = self.created_ami_aplications[self.infrastructure["region"]]
+        self.infrastructure["key_name"] = key_name
+        self.infrastructure["create_HA_infrastructure"] = True
+
+    def delete_ha_infra(self):
+        self.infrastructure["create_HA_infrastructure"] = False
+        if 'image_id' in self.infrastructure: del self.infrastructure['image_id']
+        if 'key_name' in self.infrastructure: del self.infrastructure['key_name']

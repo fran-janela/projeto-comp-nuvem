@@ -18,7 +18,7 @@ resource "aws_iam_user_login_profile" "profile" {
     for_each                = { for user in var.users_configurations : user.username => user }
     user                    = aws_iam_user.user[each.value.username].name
     password_length         = 10
-    password_reset_required = true
+    password_reset_required = false
 }
 
 output "created_users" {

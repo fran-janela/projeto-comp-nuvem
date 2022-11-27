@@ -61,3 +61,9 @@ variable "network_configurations" {
     publicdestCIDRblock = string
   })
 }
+
+
+variable "create_HA_infrastructure" {
+  type = bool
+  default = true
+}
