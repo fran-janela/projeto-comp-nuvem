@@ -24,4 +24,4 @@ python3 main.py
 
 ## Roteiro
 
-Caso queira saber como funciona a aplicação ou esteja interessado em desenvolver uma aplicação para construção de infraestrutura com código, siga o roteiro neste [link](google.com)
+Caso queira saber como funciona a aplicação ou esteja interessado em desenvolver uma aplicação para construção de infraestrutura com código, siga o roteiro neste [link](https://fran-janela.github.io/roteiro-proj-CompNuvem/)
