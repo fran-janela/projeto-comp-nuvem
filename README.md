@@ -8,9 +8,11 @@ Depois deve criar um ambiente python virtual, para garantir que as bibliotecas p
 
 Ative o ambiente virtual e utilize o arquivo `requirements.txt` para instalar as bibliotecas necessárias para o funcionamento do código
 
+Além disso, o programa se baseia na utilização do CLI da terraform, portanto, também é necessário instalar o `Terraform`. Para isso, siga o tutorial neste [link](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
+
 ## Preparação:
 
-Antes de começar, deve configurar o arquivo `.env` com as variáveis indicadas no exemplo `.sample.env` com seus respectivos valores.
+Antes de começar, deve configurar o arquivo `.env` com as variáveis indicadas no exemplo `.sample.env` com seus respectivos valores referentes à conta com Acesso de Administrador à sua AWS. **Muito cuidado com essas informações**, mantenha-as no arquivo `.env`.
 
 ## Iniciar:
 
