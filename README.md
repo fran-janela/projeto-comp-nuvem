@@ -27,3 +27,16 @@ python3 main.py
 ## Roteiro
 
 Caso queira saber como funciona a aplicação ou esteja interessado em desenvolver uma aplicação para construção de infraestrutura com código, siga o roteiro neste [link](https://fran-janela.github.io/roteiro-proj-CompNuvem/)
+
+
+--------------------
+
+## Rúbrica:
+
+- [x] Conceito C+ **feito**: A infraestrutura de rede é criada, o usuário consegue criar security groups, instancias com mais de 5 hosts, atrelar security groups a instâncias e criar usuários. Consegue deletar instÂncias, security groups e usuários. E consegue listar Instâncias, Security Groups e Usuários.
+
+- [x] Conceito B+ **feito**: Consegue adicionar regras aos Security Groups, Consegue adicionar ou Remover Restrições de Usuários e Consegue criar infraestrutura em mais de uma região, assim como desfazer todas as ações.
+
+- [x] Conceito A+ **feito**: O usuário consegue criar HA para um servidor Web;
+
+A requisição quanto ao roteiro(tutorial) está no link na aba de **Roteiro**
