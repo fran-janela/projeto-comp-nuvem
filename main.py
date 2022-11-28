@@ -26,7 +26,9 @@ def main():
     tf_dirs = all_tf_dirs()
     all_created_regions = all_created_regions_from_dir(tf_dirs)
 
-    with console.status("[bold green]Working on tasks...") as status:
+    console.print("")
+
+    with console.status("[bold green]Working on Init tasks...") as status:
         while tasks:
             task = tasks.pop(0)
             if task == "Load Existing Infrastucture":
@@ -163,19 +165,26 @@ def main():
                 console.print("\n[bold red]Invalid input, choose again please[/]")
                 continue
             else:
+                create_region_tasks = ["Create Directory & Infra File", "Init Region", "Apply Infra in Region"]
                 region = available_regions[choosen_region_id-1]
-                allInfra[region] = Infrastructure(region, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
-                create_new_region_dir(region)
-                write_json(allInfra[region].infrastructure)
-                console.log(f"task [bold blue3]Create Directory & Infra File[/] complete\n")
-                tf_create_region(region)
-                console.log(f"task [bold blue3]Init Region[/] complete\n")
-                tf_apply_changes(region)
-                console.log(f"task [bold blue3]Apply Infra in Region[/] complete\n")
+                console.print("")
+                with console.status("[bold green]Creating Region...") as status:
+                    while create_region_tasks:
+                        task = create_region_tasks.pop(0)
+                        if task == "Create Directory & Infra File":
+                            allInfra[region] = Infrastructure(region, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+                            create_new_region_dir(region)
+                            write_json(allInfra[region].infrastructure)
+                        elif task == "Init Region":
+                            tf_create_region(region)
+                        elif task == "Apply Infra in Region":
+                            tf_apply_changes(region)
+                        console.log(f"task [bold blue3]{task}[/] complete\n")
                 tf_dirs = all_tf_dirs()
                 all_created_regions = all_created_regions_from_dir(tf_dirs)
                 current_region = region
                 ESTADO = "CHOOSE_ACTION"
+                sleep(2)
                 continue
 
         # ------------------------------- DELETE REGION ------------------------------------
@@ -188,16 +197,26 @@ def main():
                 console.print(f"[bold blue3]{id}[/] - [bold white]{region}[/]")
                 id+=1
             available_input = [i for i in range(1, len(all_created_regions)+1)]
+            console.print("\n [bold white]Enter the number of the region[/] you want to delete")
             choosen_region_id = int(console.input("\n [bold blue3]>>[/] "))
             if choosen_region_id not in available_input:
                 console.print("\n[bold red]Invalid input, choose again please[/]")
                 continue
             else:
-                tf_destroy_region(all_created_regions[choosen_region_id-1])
-                remove_region_dir(all_created_regions[choosen_region_id-1])
+                console.print("")
+                delete_region_tasks = ["Destroy Region", "Remove Directory"]
+                with console.status("[bold green]Deleting Region...") as status:
+                    while delete_region_tasks:
+                        task = delete_region_tasks.pop(0)
+                        if task == "Destroy Region":
+                            tf_destroy_region(all_created_regions[choosen_region_id-1])
+                        elif task == "Remove Directory":
+                            remove_region_dir(all_created_regions[choosen_region_id-1])
+                        console.log(f"task [bold blue3]{task}[/] complete\n")
                 tf_dirs = all_tf_dirs()
                 all_created_regions = all_created_regions_from_dir(tf_dirs)
                 ESTADO = "CHOOSE_REGION"
+                sleep(2)
                 continue
 
         # ===============================================================================================
@@ -308,6 +327,7 @@ def main():
             if invalid_input:
                 console.print("\n[bold red]Invalid input, choose again please[/]")
                 invalid_input = False
+            console.print("\n [bold white]Enter the number of the instance[/] to see more details")
             selection = console.input("\n [bold blue3]>>[/] ")
             if selection not in available_input:
                 console.print("\n[bold red]Invalid input, choose again please[/]")
@@ -401,10 +421,19 @@ def main():
             console.print("\nFor Last, choose the [bold white]key pair name[/] for the instance:")
             key_name = console.input("\n=> [bold blue3]Key Pair Name[/]: ")
             # Create instance:
-            allInfra[current_region].create_instance(name, count, ami, instance_type, security_group_ids, key_name)
-            write_json(allInfra[current_region].infrastructure)
-            tf_apply_changes(current_region)
+            console.print("")
+            create_instance_tasks = ["Creating Instance Configuration", "Applying Instance Configuration"]
+            with console.status("[bold green3]Creating Instance...[/]", spinner="dots", spinner_style="bold green3") as status:
+                while create_instance_tasks:
+                    task = create_instance_tasks.pop(0)
+                    if task == "Creating Instance Configuration":
+                        allInfra[current_region].create_instance(name, count, ami, instance_type, security_group_ids, key_name)
+                        write_json(allInfra[current_region].infrastructure)
+                    elif task == "Applying Instance Configuration":
+                        tf_apply_changes(current_region)
+                    console.log(f"task [bold blue3]{task}[/] complete\n")
             ESTADO = "MANAGE_INSTANCES"
+            sleep(2)
 
         # ------------------------------- DELETE INSTANCE ------------------------------------
         elif ESTADO == "DELETE_INSTANCE":
@@ -422,6 +451,7 @@ def main():
             if invalid_input:
                 console.print("\n[bold red]Invalid input, choose again please[/]")
                 invalid_input = False
+            console.print("\n [bold white]Choose the number of the instance[/] to delete:")
             instance_option = console.input("\n [bold blue3]>>[/] ")
             if instance_option not in available_input:
                 console.print("\n[bold red]Invalid input, choose again please[/]")
@@ -433,9 +463,17 @@ def main():
                     continue
                 else:
                     instance_name = instances_names[int(instance_option)-1]
-                    allInfra[current_region].delete_instance(instance_name)
-                    write_json(allInfra[current_region].infrastructure)
-                    tf_apply_changes(current_region)
+                    delete_instance_tasks = ["Deleting Instance Configuration", "Refreshing Infra Configuration"]
+                    with console.status("[bold green3]Deleting Instance...[/]", spinner="dots", spinner_style="bold green3") as status:
+                        while delete_instance_tasks:
+                            task = delete_instance_tasks.pop(0)
+                            if task == "Deleting Instance Configuration":
+                                allInfra[current_region].delete_instance(instance_name)
+                                write_json(allInfra[current_region].infrastructure)
+                            elif task == "Refreshing Infra Configuration":
+                                tf_apply_changes(current_region)
+                            console.log(f"task [bold blue3]{task}[/] complete\n")
+                    sleep(2)
                     ESTADO = "MANAGE_INSTANCES"
 
         # ------------------------------- UPDATE INSTANCE ------------------------------------
@@ -454,6 +492,7 @@ def main():
             if invalid_input:
                 console.print("\n[bold red]Invalid input, choose again please[/]")
                 invalid_input = False
+            console.print("\n [bold white]Choose the number of the instance configuration[/] to update:")
             instance_option = console.input("\n [bold blue3]>>[/] ")
             if instance_option not in available_input:
                 invalid_input = True
@@ -542,8 +581,17 @@ def main():
                                         new_security_group_ids.append(available_sec_groups_ids[int(security_group_option)-1])
                                 allInfra[current_region].update_instance_security_groups(instance_name, new_security_group_ids)
                             changing_sec_groups = False
-                    write_json(allInfra[current_region].infrastructure)
-                    tf_apply_changes(current_region)
+                    updating_instance_tasks = ["Updating Instance Configuration", "Refreshing Infra Configuration"]
+                    with console.status("[bold green]Updating Instance...") as status:
+                        while updating_instance_tasks:
+                            task = updating_instance_tasks.pop(0)
+                            if task == "Updating Instance Configuration":
+                                write_json(allInfra[current_region].infrastructure)
+                            elif task == "Refreshing Infra Configuration":
+                                tf_apply_changes(current_region)
+                            console.log(f"task [bold blue3]{task}[/] complete\n")
+                    sleep(2)
+                    ESTADO = "MANAGE_INSTANCES"
 
         # ===============================================================================================
         #                                      MANAGE SEURITY GROUPS
@@ -554,6 +602,7 @@ def main():
             clear_console()
             inicial_print(console)
             console.rule("[bold grey62] Manage Security Groups", style="bold grey62", align="center")
+            console.print("\n[bold white]Available Actions[/]:")
             console.print(f"\n[bold blue3]1[/] - [bold white]List Security Groups[/]")
             console.print(f"[bold blue3]2[/] - [bold white]Create Security Group[/]")
             console.print(f"[bold blue3]3[/] - [bold white]Delete Security Group[/]")
@@ -593,6 +642,7 @@ def main():
             console.rule("[bold grey62] List Security Groups", style="bold grey62", align="center")
             security_groups_config = get_sec_groups_to_list(current_region)
             sec_groups_names, sec_groups_ids = get_sec_groups(current_region)
+            console.print("\n[bold white]Available Security Groups[/]:")
             for i in range(len(sec_groups_names)):
                 console.print(f"[bold blue3]{i+1}[/] - [bold white]{sec_groups_names[i]}[/]")
             console.print(f"\n.. or")
@@ -602,6 +652,7 @@ def main():
             if invalid_input:
                 console.print("\n[bold red]Invalid input, choose again please[/]")
                 invalid_input = False
+            console.print("\n [bold white]Choose the number of the Security Group[/] to see more details:")
             security_group_option = console.input("\n [bold blue3]>>[/] ")
             acepted_input = False
             if security_group_option not in available_input:
@@ -705,7 +756,7 @@ def main():
                         allInfra[current_region].create_ingress_for_sg(description, protocol, from_port, to_port, cidr_blocks, name)
                     elif option == "2":
                         # Set description
-                        console.print("\First, choose the [bold white]Description[/] for the Egress Rule:")
+                        console.print("\nFirst, choose the [bold white]Description[/] for the Egress Rule:")
                         description = console.input("\n=> [bold blue3]Description[/]: ")
                         # Set protocol type, beteween tcp, udp, icmp, all
                         console.print("\nNow, choose the [bold white]protocol[/] for the Egress Rule:")
@@ -746,8 +797,16 @@ def main():
                     elif option == "finished":
                         adding_rules = False
                         ESTADO = "MANAGE_SECURITY_GROUPS"
-            write_json(allInfra[current_region].infrastructure)
-            tf_apply_changes(current_region)
+            console.print("")
+            create_sec_group_tasks = ["Creating Security Group Configuration", "Applying Secutity Group Configuration"]
+            with console.status("[bold green3]Creating Security Group...[/]", spinner="dots", spinner_style="bold green3") as status:
+                while create_sec_group_tasks:
+                    task = create_sec_group_tasks.pop(0)
+                    if task == "Creating Security Group Configuration":
+                        write_json(allInfra[current_region].infrastructure)
+                    elif task == "Applying Secutity Group Configuration":
+                        tf_apply_changes(current_region)
+                    console.log(f"task [bold blue3]{task}[/] complete\n")
             sleep(2)
             ESTADO = "MANAGE_SECURITY_GROUPS"
 
@@ -785,10 +844,19 @@ def main():
                     ESTADO = "MANAGE_SECURITY_GROUPS"
                     continue
                 else:
+                    console.print("")
                     sec_group_name = sec_groups_names[index_not_used_sec_groups[int(delete_sec_group_option)-1]].split(" ")[0]
-                    allInfra[current_region].delete_sec_group(sec_group_name)
-                    write_json(allInfra[current_region].infrastructure)
-                    tf_apply_changes(current_region)
+                    delete_sec_group_tasks = ["Deleting Security Group Configuration", "Refreshing Infra Configuration"]
+                    with console.status("[bold green3]Deleting Security Group...[/]", spinner="dots", spinner_style="bold green3") as status:
+                        while delete_sec_group_tasks:
+                            task = delete_sec_group_tasks.pop(0)
+                            if task == "Deleting Security Group Configuration":
+                                allInfra[current_region].delete_sec_group(sec_group_name)
+                                write_json(allInfra[current_region].infrastructure)
+                            elif task == "Refreshing Infra Configuration":
+                                tf_apply_changes(current_region)
+                            console.log(f"task [bold blue3]{task}[/] complete\n")
+                    sleep(2)
                     ESTADO = "MANAGE_SECURITY_GROUPS"
 
         # ------------------------ ADD RULE SECURITY GROUP ------------------------------
@@ -918,8 +986,15 @@ def main():
                                 else:
                                     cidr_blocks.append(cidr_ip)
                             allInfra[current_region].create_egress_for_sg(description, protocol, from_port, to_port, cidr_blocks, sec_group_name)
-                    write_json(allInfra[current_region].infrastructure)
-                    tf_apply_changes(current_region)
+                    console.print("")
+                    add_rule_tasks = ["Adding Rule to Security Group Configuration", "Refreshing Infra Configuration"]
+                    with console.status("[bold green3]Adding Rule to Security Group...[/]", spinner="dots", spinner_style="bold green3") as status:
+                        while add_rule_tasks:
+                            task = add_rule_tasks.pop(0)
+                            if task == "Adding Rule to Security Group Configuration":
+                                write_json(allInfra[current_region].infrastructure)
+                            elif task == "Refreshing Infra Configuration":
+                                tf_apply_changes(current_region)
                     sleep(2)
         
         # ------------------------ REMOVE RULE SECURITY GROUP ------------------------------
@@ -989,6 +1064,7 @@ def main():
                             if invalid_input:
                                 console.print("\n[bold red]Invalid input, choose again please[/]")
                                 invalid_input = False
+                            console.print("\n [bold white]Choose Ingress Rule id[/] to remove:")
                             ingress_rule_option = console.input("\n [bold blue3]>>[/] ")
                             if ingress_rule_option not in available_input:
                                 invalid_input = True
@@ -1023,8 +1099,16 @@ def main():
                                     continue
                                 else:
                                     allInfra[current_region].remove_egress_rule_from_sg(int(egress_rule_option), sec_group_name)
-                    write_json(allInfra[current_region].infrastructure)
-                    tf_apply_changes(current_region)
+                    console.print("")
+                    remove_rule_tasks = ["Removing Rule from Security Group Configuration", "Refreshing Infra Configuration"]
+                    with console.status("[bold green3]Removing Rule from Security Group...[/]", spinner="dots", spinner_style="bold green3") as status:
+                        while add_rule_tasks:
+                            task = add_rule_tasks.pop(0)
+                            if task == "Removing Rule from Security Group Configuration":
+                                write_json(allInfra[current_region].infrastructure)
+                            elif task == "Refreshing Infra Configuration":
+                                tf_apply_changes(current_region)
+                    
                     sleep(2)
 
         # ===============================================================================================
@@ -1035,6 +1119,7 @@ def main():
             clear_console()
             inicial_print(console)
             console.rule("[bold grey62] Manage HA Application", style="bold grey62", align="center")
+            console.print("\n[bold white]Available Actions[/]:")
             console.print("\n[bold blue3]1[/] - [bold white]List HA aplication URL[/]")
             console.print("[bold blue3]2[/] - [bold white]Create HA Application[/]")
             console.print("[bold blue3]3[/] - [bold white]Remove HA Application[/]")
@@ -1104,10 +1189,18 @@ def main():
                     console.print("\n> Insert the key name to be used in the HA application")
                     key_name = console.input("\n [bold blue3]>>[/] ")
                     console.print("")
-                    allInfra[current_region].add_ha_infra(key_name)
-                    write_json(allInfra[current_region].infrastructure)
-                    copy_files_from_dir_to_dir(f'tf-{current_region}/')
-                    tf_apply_changes(current_region)
+                    create_HA_webserver_tasks = ["Creating HA Configuration", "Coppying File Dependencies", "Applying HA Configuration"]
+                    with console.status("[bold green3]Creating HA for WebServer...[/]", spinner="dots", spinner_style="bold green3") as status:
+                        while create_HA_webserver_tasks:
+                            task = create_HA_webserver_tasks.pop(0)
+                            if task == "Creating HA Configuration":
+                                allInfra[current_region].add_ha_infra(key_name)
+                                write_json(allInfra[current_region].infrastructure)
+                            elif task == "Coppying File Dependencies":
+                                copy_files_from_dir_to_dir(f'tf-{current_region}/')
+                            elif task == "Applying HA Configuration":
+                                tf_apply_changes(current_region)
+                            console.log(f"task [bold blue3]{task}[/] complete\n")
                     sleep(2)
                     ESTADO = "MANAGE_HA_APPLICATION"
                     continue
@@ -1133,21 +1226,31 @@ def main():
                     ESTADO = "MANAGE_HA_APPLICATION"
                     continue
                 elif ha_app_option in ["yes", "Y", "YES", "Yes", "y"]:
-                    remove_HA_configurations(current_region)
-                    tf_apply_changes(current_region)
-                    allInfra[current_region].delete_ha_infra()
-                    write_json(allInfra[current_region].infrastructure)
+                    console.print("")
+                    remove_HA_tasks = ["Removing HA Files", "Refreshing Infra Configuration", "Removing HA Configuration"]
+                    with console.status("[bold green3]Removing HA for Webserver...[/]", spinner="dots", spinner_style="bold green3") as status:
+                        while remove_HA_tasks:
+                            task = remove_HA_tasks.pop(0)
+                            if task == "Removing HA Files":
+                                remove_HA_configurations(current_region)
+                            elif task == "Refreshing Infra Configuration":
+                                tf_apply_changes(current_region)
+                            elif task == "Removing HA Configuration":
+                                allInfra[current_region].delete_ha_infra()
+                                write_json(allInfra[current_region].infrastructure)
+                            console.log(f"task [bold blue3]{task}[/] complete\n")
                     sleep(2)
                     ESTADO = "MANAGE_HA_APPLICATION"
                     continue
         # ===============================================================================================
-        #                                         USER MENU
+        #                                         IAM MENU
         # ===============================================================================================
         elif ESTADO == "IAM_MENU":
             clear_console()
             inicial_print(console)
             console.rule("[bold grey62] IAM Menu", style="bold grey62", align="center")
             if not cleared_infra:
+                console.print("\n[bold white]Available Actions:[/]")
                 console.print("\n[bold blue3]1[/] - [bold white]Manage Users[/]")
                 console.print("[bold blue3]2[/] - [bold white]Manage Policies[/]")
                 console.print(f"\n.. or")
@@ -1164,8 +1267,16 @@ def main():
                     continue
                 elif option == "clear":
                     cleared_infra = True
-                    iamInfra.clear_infrastructure()
+                    console.print("")
+                    clear_infra_task = ["Clearing IAM Infrastructure"]
+                    with console.status("[bold green3]Clearing IAM Infrastructure...[/]", spinner="dots", spinner_style="bold green3") as status:
+                        while clear_infra_task:
+                            task = clear_infra_task.pop(0)
+                            if task == "Clearing IAM Infrastructure":
+                                iamInfra.clear_infrastructure()
+                            console.log(f"task [bold blue3]{task}[/] complete\n")
                     ESTADO = "IAM_MENU"
+                    sleep(2)
                 elif option == "back":
                     ESTADO = "START_MENU"
                     continue
@@ -1194,11 +1305,22 @@ def main():
                     continue
                 elif option == "restore":
                     cleared_infra = False
-                    iamInfra = IAM_Infrastructure(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
-                    create_iam_config_folder()
-                    write_iam_json(iamInfra.IAM_infra)
-                    os.system(f"cd iam && terraform init &> /dev/null")
-                    tf_iam_apply_changes()
+                    console.print("")
+                    restore_infra_task = ["Restoring IAM Infrastructure", "Refreshing IAM Configuration", "Init IAM Infrastructure" "Applying IAM Configuration"]
+                    with console.status("[bold green3]Restoring IAM Infrastructure...[/]", spinner="dots", spinner_style="bold green3") as status:
+                        while restore_infra_task:
+                            task = restore_infra_task.pop(0)
+                            if task == "Restoring IAM Infrastructure":
+                                iamInfra = IAM_Infrastructure(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+                                create_iam_config_folder()
+                            elif task == "Refreshing IAM Configuration":
+                                write_iam_json(iamInfra.IAM_infra)
+                            elif task == "Init IAM Infrastructure":
+                                os.system(f"cd iam && terraform init &> /dev/null")
+                            elif task == "Applying IAM Configuration":
+                                tf_iam_apply_changes()
+                            console.log(f"task [bold blue3]{task}[/] complete\n")
+                    sleep(2)
                     continue
 
         # ===============================================================================================
@@ -1208,6 +1330,7 @@ def main():
             clear_console()
             inicial_print(console)
             console.rule("[bold grey62] Manage Users", style="bold grey62", align="center")
+            console.print("\n[bold white]Available Actions:[/]")
             console.print("\n[bold blue3]1[/] - [bold white]List User[/]")
             console.print("[bold blue3]2[/] - [bold white]Create User[/]")
             console.print("[bold blue3]3[/] - [bold white]Delete User[/]")
@@ -1280,13 +1403,21 @@ def main():
                     invalid_input = True
                     continue
                 else:
-                    iamInfra.create_user(user_name)
-                    write_iam_json(iamInfra.IAM_infra)
-                    tf_iam_apply_changes()
-                    sleep(2)
+                    console.print("")
+                    create_user_tasks = ["Creating User Configuration", "Applying User Configuration"]
+                    with console.status("[bold green3]Creating User...[/]", spinner="dots", spinner_style="bold green3") as status:
+                        while create_user_tasks:
+                            task = create_user_tasks.pop(0)
+                            if task == "Creating User Configuration":
+                                iamInfra.create_user(user_name)
+                                write_iam_json(iamInfra.IAM_infra)
+                            elif task == "Applying User Configuration":
+                                tf_iam_apply_changes()
+                            console.log(f"task [bold blue3]{task}[/] complete\n")
+                    sleep(1)
                     console.rule("\n[bold grey62] User Password", style="bold grey62", align="center")
                     console.print("\nThis is the [blue3]password[/] for the user [bold blue3]{0}[/]".format(user_name))
-                    console.print("[bold white]{0}[/]".format(get_user_password(user_name)))
+                    console.print("\n=>    [bold white]{0}[/]".format(get_user_password(user_name)))
                     console.print("\n\n[bold red]Save the password before continue[/]")
                     _ = console.input("\n\n [bold light_steel_blue]Press Enter to continue[/] ")
                     ESTADO = "MANAGE_USERS"
@@ -1297,6 +1428,7 @@ def main():
             clear_console()
             inicial_print(console)
             console.rule("[bold grey62] Delete User", style="bold grey62", align="center")
+            console.print("\n[bold white]Available Users[/]")
             created_user_names = [ user["username"] for user in iamInfra.IAM_infra["users_configurations"] ]
             for i in range(len(created_user_names)):
                 console.print(f'[bold blue3]{i+1}[/] - [bold white]{created_user_names[i]}[/]')
@@ -1316,9 +1448,17 @@ def main():
                 ESTADO = "MANAGE_USERS"
                 continue
             else:
-                iamInfra.delete_user(created_user_names[int(selection)-1])
-                write_iam_json(iamInfra.IAM_infra)
-                tf_iam_apply_changes()
+                console.print("")
+                delete_user_tasks = ["Deleting User Configuration", "Refreshing IAM Configuration"]
+                with console.status("[bold green3]Deleting User...[/]", spinner="dots", spinner_style="bold green3") as status:
+                    while delete_user_tasks:
+                        task = delete_user_tasks.pop(0)
+                        if task == "Deleting User Configuration":
+                            iamInfra.delete_user(created_user_names[int(selection)-1])
+                            write_iam_json(iamInfra.IAM_infra)
+                        elif task == "Refreshing IAM Configuration":
+                            tf_iam_apply_changes()
+                        console.log(f"task [bold blue3]{task}[/] complete\n")
                 sleep(2)
                 ESTADO = "MANAGE_USERS"
                 continue
@@ -1328,6 +1468,7 @@ def main():
             clear_console()
             inicial_print(console)
             console.rule("[bold grey62] Atatch Policy to User", style="bold grey62", align="center")
+            console.print("\n[bold white]Available Users[/]")
             created_user_names = [ user["username"] for user in iamInfra.IAM_infra["users_configurations"] ]
             for i in range(len(created_user_names)):
                 console.print(f'[bold blue3]{i+1}[/] - [bold white]{created_user_names[i]}[/]')
@@ -1372,9 +1513,17 @@ def main():
                     continue
                 else:
                     policy_name = created_policy_names[int(selection)-1]
-                    iamInfra.attach_policy(user_name, policy_name)
-                    write_iam_json(iamInfra.IAM_infra)
-                    tf_iam_apply_changes()
+                    console.print("")
+                    add_policy_tasks = ["Adding Policy Attachement", "Refreshing IAM Configuration"]
+                    with console.status("[bold green3]Adding Policy Attachement...[/]", spinner="dots", spinner_style="bold green3") as status:
+                        while add_policy_tasks:
+                            task = add_policy_tasks.pop(0)
+                            if task == "Adding Policy Attachement":
+                                iamInfra.attach_policy(user_name, policy_name)
+                                write_iam_json(iamInfra.IAM_infra)
+                            elif task == "Refreshing IAM Configuration":
+                                tf_iam_apply_changes()
+                            console.log(f"task [bold blue3]{task}[/] complete\n")
                     sleep(2)
                     ESTADO = "MANAGE_USERS"
                     continue
@@ -1384,6 +1533,7 @@ def main():
             clear_console()
             inicial_print(console)
             console.rule("[bold grey62] Detatch Policy to User", style="bold grey62", align="center")
+            console.print("\n[bold white]Available Users[/]")
             created_user_names = [ user["username"] for user in iamInfra.IAM_infra["users_configurations"] ]
             for i in range(len(created_user_names)):
                 console.print(f'[bold blue3]{i+1}[/] - [bold white]{created_user_names[i]}[/]')
@@ -1431,9 +1581,17 @@ def main():
                         continue
                     else:
                         policy_name = attached_policies[int(selection)-1]
-                        iamInfra.detach_policy(user_name, policy_name)
-                        write_iam_json(iamInfra.IAM_infra)
-                        tf_iam_apply_changes()
+                        dettatch_policy_tasks = ["Removing Policy Attatchement", "Refreshing IAM Infrastructure"]
+                        with console.status("[bold green3]Removing Policy Attatchement...[/]", spinner="dots", spinner_style="bold green3") as status:
+                            while dettatch_policy_tasks:
+                                task = dettatch_policy_tasks.pop(0)
+                                if task == "Removing Policy Attatchement":
+                                    iamInfra.detach_policy(user_name, policy_name)
+                                    write_iam_json(iamInfra.IAM_infra)
+                                elif task == "Refreshing IAM Infrastructure":
+                                    tf_iam_apply_changes()
+                                console.log(f"task [bold blue3]{task}[/] complete\n")
+                        sleep(2)
                         selecting_detach_policy = False
                         ESTADO = "MANAGE_USERS"
                         continue
@@ -1445,6 +1603,7 @@ def main():
             clear_console()
             inicial_print(console)
             console.rule("[bold grey62] Manage Policies", style="bold grey62", align="center")
+            console.print(f"\n[bold white]Available Actions:[/]")
             console.print("\n[bold blue3]1[/] - [bold white]List Policies[/]")
             console.print("[bold blue3]2[/] - [bold white]Import Policy[/]")
             console.print(f"\n.. or")
@@ -1483,6 +1642,7 @@ def main():
             if invalid_input:
                 console.print("\n[bold red]Invalid input, choose again please[/]")
                 invalid_input = False
+            console.print("\n [blod white]Select a policy by its number[/] to see more details")
             selection = console.input("\n [bold blue3]>>[/] ")
             invalid_input = False
             if selection not in available_inputs:
@@ -1537,12 +1697,21 @@ def main():
                         policy_name = passed_path.split("/")[-1].split(".")[0]
                         data = read_json(f'iam/policies/{policy_name}.json')
                         try:
-                            _ = json_policy_to_infra(data, policy_name)
-                            iamInfra.load_policies_from_folder()
                             console.print("")
-                            console.log(f'[bold blue3]Policy[/] imported [green3]successfully[/]')
-                            write_iam_json(iamInfra.IAM_infra)
-                            tf_iam_apply_changes()
+                            import_policy_tasks = ["Importing Policy from JSON", "Refreshing Available Policies", "Saving Configuration", "Refreshing IAM Infrastructure"]
+                            with console.status("[bold green3]Importing Policy...[/]", spinner="dots", spinner_style="bold green3") as status:
+                                while import_policy_tasks:
+                                    task = import_policy_tasks.pop(0)
+                                    if task == "Importing Policy from JSON":
+                                        _ = json_policy_to_infra(data, policy_name)
+                                    elif task == "Refreshing Available Policies":
+                                        iamInfra.load_policies_from_folder()
+                                        console.log(f'[bold blue3]Policy[/] imported [green3]successfully[/]\n')
+                                    elif task == "Saving Configuration":
+                                        write_iam_json(iamInfra.IAM_infra)
+                                    elif task == "Refreshing IAM Infrastructure":
+                                        tf_iam_apply_changes()
+                                    console.log(f"task [bold blue3]{task}[/] complete\n")
                         except:
                             os.system(f'rm -rf iam/policies/{policy_name}.json')
                             invalid_json_data = True
@@ -1565,6 +1734,7 @@ def main():
             if invalid_input:
                 console.print("\n[bold red]Invalid input, choose again please[/]")
                 invalid_input = False
+            console.print("\n [bold white]Choose an instance by number[/] to see more details")
             selection = console.input("\n [bold blue3]>>[/] ")
             invalid_input = False
             if selection not in available_inputs:

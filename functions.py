@@ -52,7 +52,7 @@ def tf_create_region(region):
     os.system(f'cd tf-{region} && terraform init &> /dev/null')
 
 def tf_apply_changes(region):
-    os.system(f'cd tf-{region} && terraform apply -var-file="config/{region}.tfvars.json" -auto-approve')
+    os.system(f'cd tf-{region} && terraform apply -var-file="config/{region}.tfvars.json" -auto-approve &> /dev/null')
 
 def tf_destroy_region(region):
     os.system(f'cd tf-{region} && terraform destroy -var-file="config/{region}.tfvars.json" -auto-approve &> /dev/null')
