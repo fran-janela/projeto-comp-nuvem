@@ -33,9 +33,9 @@ Caso queira saber como funciona a aplicação ou esteja interessado em desenvolv
 
 ## Rúbrica:
 
-- [x] Conceito C+ **feito**: A infraestrutura de rede é criada, o usuário consegue criar security groups, instancias com mais de 5 hosts, atrelar security groups a instâncias e criar usuários. Consegue deletar instÂncias, security groups e usuários. E consegue listar Instâncias, Security Groups e Usuários.
+- [x] Conceito C+ **feito**: A infraestrutura de rede é criada, o usuário consegue criar *Security Groups*, Instâncias com mais de 5 hosts, atrelar *Security Groups* a instâncias e criar usuários. Consegue deletar instâncias, *Security Groups* e usuários. E consegue listar Instâncias, Security Groups e Usuários.
 
-- [x] Conceito B+ **feito**: Consegue adicionar regras aos Security Groups, Consegue adicionar ou Remover Restrições de Usuários e Consegue criar infraestrutura em mais de uma região, assim como desfazer todas as ações.
+- [x] Conceito B+ **feito**: Consegue adicionar regras aos *Security Groups*, consegue adicionar ou remover Restrições de Usuários e consegue criar infraestrutura em mais de uma região, assim como desfazer todas as ações.
 
 - [x] Conceito A+ **feito**: O usuário consegue criar HA para um servidor Web;
 
